@@ -1,0 +1,1771 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#1e293b">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Kasir POS">
+    <title>Kasir Cloud POS - 10 Template Terintegrasi Penuh</title>
+    <!-- Library html2canvas, jsPDF, JsBarcode, & QRious -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.js"></script>
+    <style>
+        * { box-sizing: border-box; font-family: 'Segoe UI', Arial, sans-serif; }
+        body { margin: 0; background-color: #f1f5f9; color: #334155; }
+        .app-shell { display: flex; min-height: 100vh; position: relative; }
+
+        /* Sidebar Styling */
+        .sidebar {
+            width: 60px;
+            background: #1e293b;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            z-index: 1000;
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+            white-space: nowrap;
+            box-shadow: 4px 0 12px rgba(0, 0, 0, 0.15);
+        }
+        .sidebar:hover { width: 240px; }
+        .sidebar-header {
+            padding: 20px 18px;
+            font-size: 16px;
+            font-weight: bold;
+            border-bottom: 1px solid #334155;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: #0f172a;
+        }
+        .sidebar-menu { list-style: none; padding: 15px 0; margin: 0; flex: 1; }
+        .sidebar-menu li {
+            padding: 14px 18px;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #94a3b8;
+            transition: all 0.2s;
+        }
+        .sidebar-menu li .menu-icon { font-size: 18px; min-width: 24px; text-align: center; }
+        .sidebar-menu li .menu-text { opacity: 0; transition: opacity 0.2s; }
+        .sidebar:hover .sidebar-menu li .menu-text { opacity: 1; }
+        .sidebar-menu li:hover, .sidebar-menu li.active { background: #3b82f6; color: #ffffff; font-weight: bold; }
+
+        /* Main Content Area */
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            margin-left: 60px;
+            overflow-y: auto;
+            transition: margin-left 0.3s;
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Card Form & Controls */
+        .card { background: #ffffff; padding: 18px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 15px; }
+        .card h3 { margin-top: 0; font-size: 14px; border-bottom: 2px solid #e2e8f0; padding-bottom: 6px; color: #1e293b; text-transform: uppercase; letter-spacing: 0.5px; }
+        .form-group { margin-bottom: 10px; }
+        .form-group label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 4px; color: #475569; }
+        .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; }
+        .row-inputs { display: flex; gap: 10px; }
+        .row-inputs div { flex: 1; }
+
+        /* Split View Grid */
+        .transaksi-grid { display: flex; gap: 20px; align-items: flex-start; }
+        .editor-col { flex: 1.2; }
+        .preview-col { min-width: 360px; background: #cbd5e1; padding: 20px; border-radius: 10px; display: flex; flex-direction: column; align-items: center; position: sticky; top: 20px; }
+
+        /* Buttons */
+        button { cursor: pointer; border: none; padding: 10px 14px; border-radius: 6px; font-weight: bold; font-size: 13px; transition: 0.2s; }
+        .btn-add { background-color: #38a169; color: white; width: 100%; }
+        .btn-add:hover { background-color: #2f855a; }
+        .btn-save { background-color: #4a5568; color: white; width: 100%; }
+        .btn-primary { background-color: #2563eb; color: white; width: 100%; }
+        .btn-primary:hover { background-color: #1d4ed8; }
+        .btn-print { background-color: #2b6cb0; color: white; width: 100%; font-size: 14px; padding: 12px; }
+        .btn-pdf { background-color: #e53e3e; color: white; width: 100%; }
+        .btn-jpg { background-color: #d69e2e; color: white; width: 100%; }
+        .btn-del { background-color: #e53e3e; color: white; padding: 2px 6px; font-size: 10px; border-radius: 3px; }
+        .btn-edit { background-color: #2563eb; color: white; padding: 2px 6px; font-size: 10px; border-radius: 3px; margin-right: 3px; }
+        .btn-remove-logo { background-color: #718096; color: white; padding: 4px 8px; font-size: 11px; margin-top: 4px; }
+
+        /* Badges Status Pembayaran */
+        .status-badge { display: inline-block; padding: 3px 8px; font-weight: bold; font-size: 11px; text-align: center; border-radius: 4px; text-transform: uppercase; }
+        .status-lunas { background: #c6f6d5; color: #22543d; border: 1px solid #38a169; }
+        .status-dp { background: #feebc8; color: #744210; border: 1px solid #d69e2e; }
+        .status-unpaid { background: #fed7d7; color: #742a2a; border: 1px solid #e53e3e; }
+
+        /* Shared Helpers & Preview Struk Base */
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+        .barcode-container { text-align: center; margin-top: 10px; }
+        .barcode-container svg { max-width: 100%; height: auto; }
+        .barcode-container canvas { margin: 0 auto; display: block; }
+
+        .receipt-container { background: #ffffff; padding: 15px 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.15); color: #000; box-sizing: border-box; transition: all 0.2s ease; }
+        .mode-75mm { width: 300px; }
+        .mode-57mm { width: 230px; }
+
+        /* ========================================================= */
+        /* STYLES 10 TEMPLATE ASLI ANDA                             */
+        /* ========================================================= */
+        .tpl-classic { font-family: 'Courier New', Courier, monospace; font-size: 12px; line-height: 1.3; }
+        .tpl-classic .mode-57mm { font-size: 10px; }
+        .tpl-classic .receipt-header { text-align: center; margin-bottom: 8px; }
+        .tpl-classic .receipt-logo { max-width: 70px; max-height: 55px; margin: 0 auto 6px auto; display: none; }
+        .tpl-classic .receipt-header h3 { margin: 0; text-transform: uppercase; font-size: 1.2em; }
+        .tpl-classic .receipt-header p { margin: 2px 0; font-size: 0.85em; }
+        .tpl-classic .divider { border-top: 1px dashed #000; margin: 6px 0; }
+        .tpl-classic .receipt-table { width: 100%; border-collapse: collapse; }
+        .tpl-classic .receipt-table th { text-align: left; border-bottom: 1px dashed #000; padding-bottom: 3px; font-size: 0.85em; }
+        .tpl-classic .receipt-table td { padding: 3px 0; vertical-align: top; }
+
+        .tpl-modern { font-family: 'Segoe UI', Arial, sans-serif; font-size: 11px; line-height: 1.35; }
+        .tpl-modern .mode-57mm { font-size: 9.5px; }
+        .tpl-modern .receipt-header { text-align: center; margin-bottom: 10px; }
+        .tpl-modern .receipt-logo { max-width: 75px; max-height: 55px; margin: 0 auto 6px auto; display: none; }
+        .tpl-modern .receipt-header h3 { margin: 0; font-size: 1.3em; letter-spacing: 0.5px; color: #1a202c; }
+        .tpl-modern .receipt-header p { margin: 1px 0; font-size: 0.9em; color: #4a5568; }
+        .tpl-modern .divider { border-top: 1px solid #cbd5e0; margin: 8px 0; }
+        .tpl-modern .receipt-table { width: 100%; border-collapse: collapse; }
+        .tpl-modern .receipt-table th { text-align: left; border-bottom: 2px solid #2d3748; padding-bottom: 4px; font-size: 0.85em; text-transform: uppercase; color: #2d3748; }
+
+        .tpl-retro { font-family: 'Courier New', Courier, monospace; font-size: 11px; line-height: 1.25; border: 2px solid #000; padding: 10px; }
+        .tpl-retro .mode-57mm { font-size: 9.5px; }
+        .tpl-retro .receipt-header { text-align: center; margin-bottom: 8px; background: #f0f0f0; padding: 6px 0; border-bottom: 2px solid #000; }
+        .tpl-retro .receipt-header h3 { margin: 0; text-transform: uppercase; font-size: 1.2em; font-weight: 900; }
+        .tpl-retro .divider { border-top: 3px double #000; margin: 6px 0; }
+
+        .tpl-boutique { font-family: Georgia, 'Times New Roman', serif; font-size: 11px; line-height: 1.4; color: #222; }
+        .tpl-boutique .mode-57mm { font-size: 9.5px; }
+        .tpl-boutique .receipt-header { text-align: center; margin-bottom: 12px; }
+        .tpl-boutique .receipt-header h3 { margin: 0; font-size: 1.35em; font-weight: normal; letter-spacing: 1px; font-style: italic; }
+        .tpl-boutique .divider { border-top: 1px dotted #888; margin: 8px 0; }
+
+        .tpl-compact { font-family: Tahoma, Verdana, sans-serif; font-size: 10px; line-height: 1.2; }
+        .tpl-compact .mode-57mm { font-size: 8.5px; }
+        .tpl-compact .receipt-header { text-align: left; margin-bottom: 6px; }
+        .tpl-compact .receipt-header h3 { margin: 0; font-size: 1.1em; font-weight: bold; }
+        .tpl-compact .divider { border-top: 1px dotted #000; margin: 4px 0; }
+
+        .tpl-printing { font-family: Arial, Helvetica, sans-serif; font-size: 12px; line-height: 1.3; color: #000; }
+        .tpl-printing .mode-57mm { font-size: 10px; }
+        .tpl-printing .receipt-header { text-align: center; margin-bottom: 6px; }
+        .tpl-printing .receipt-header h3 { margin: 0; font-size: 1.35em; font-weight: bold; }
+        .tpl-printing .divider { border-top: 1px dashed #000; margin: 6px 0; }
+
+        .tpl-aesculapius { font-family: 'Arial', sans-serif; font-size: 11px; color: #111; line-height: 1.25; }
+        .tpl-aesculapius .mode-57mm { font-size: 9px; }
+        .tpl-aesculapius .receipt-header { text-align: center; margin-bottom: 6px; }
+        .tpl-aesculapius .receipt-header h3 { margin: 0; font-size: 1.25em; font-weight: bold; color: #1a2a5e; letter-spacing: 0.5px; }
+        .tpl-aesculapius .divider { border-top: 1px solid #111; margin: 6px 0; }
+
+        .tpl-toserba { font-family: 'Courier New', monospace; font-size: 11px; line-height: 1.2; font-weight: bold; letter-spacing: 0.3px; }
+        .tpl-toserba .mode-57mm { font-size: 9px; letter-spacing: 0px; }
+        .tpl-toserba .receipt-header { text-align: center; margin-bottom: 6px; }
+        .tpl-toserba .receipt-header h3 { font-size: 1.3em; font-weight: 900; margin: 0; text-transform: uppercase; }
+
+        .tpl-retailindo { font-family: 'Trebuchet MS', Arial, sans-serif; font-size: 11px; line-height: 1.3; font-weight: 600; }
+        .tpl-retailindo .mode-57mm { font-size: 9px; }
+        .tpl-retailindo .receipt-header { text-align: center; margin-bottom: 6px; }
+        .tpl-retailindo .receipt-header h3 { font-size: 1.25em; font-weight: 900; margin: 0; color: #000; }
+
+        .tpl-apoteksehat { font-family: Arial, sans-serif; font-size: 11px; line-height: 1.3; }
+        .tpl-apoteksehat .mode-57mm { font-size: 9px; }
+        .tpl-apoteksehat .receipt-header { text-align: center; margin-bottom: 6px; }
+        .tpl-apoteksehat .receipt-header h3 { font-size: 1.2em; font-weight: bold; margin: 0; color: #0f5132; }
+
+        /* Shared Dynamic Blocks */
+        .receipt-summary { width: 100%; margin-top: 4px; }
+        .receipt-summary td { padding: 2px 0; }
+        .grand-total { font-weight: bold; font-size: 1.1em; }
+        .template-notice { font-size: 0.82em; margin-top: 8px; text-align: center; white-space: pre-line; }
+        .receipt-footer { text-align: center; font-size: 0.85em; margin-top: 6px; }
+        
+        .meta-grid { font-size: 0.88em; margin: 6px 0; border-top: 1px solid #111; border-bottom: 1px solid #111; padding: 4px 0; }
+        .meta-grid div { display: flex; justify-content: space-between; }
+        .meta-block { text-align: left; margin-bottom: 6px; font-size: 0.95em; line-height: 1.35; }
+        .npwp-block { font-size: 0.85em; border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 4px 0; margin: 4px 0; text-align: center; }
+        .status-block { text-align: left; margin-top: 4px; font-size: 0.95em; line-height: 1.35; }
+        .printing-brand { text-align: center; margin-top: 12px; font-weight: bold; font-size: 0.9em; line-height: 1.3; }
+
+        /* Table custom for history */
+        .table-custom { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+        .table-custom th, .table-custom td { border: 1px solid #e2e8f0; padding: 8px; text-align: left; }
+        .table-custom th { background: #f8fafc; }
+
+        @media print {
+            .sidebar, .editor-col, button { display: none !important; }
+            .main-content { margin-left: 0 !important; padding: 0 !important; }
+            .preview-col { background: none; padding: 0; position: static; }
+            .receipt-container { box-shadow: none; margin: 0 auto; }
+            .mode-75mm { width: 75mm; }
+            .mode-57mm { width: 57mm; }
+            @page { margin: 0; }
+            .no-print { display: none !important; }
+        }
+
+        /* Icon (Lucide) */
+        .lucide { width: 16px; height: 16px; stroke-width: 2.2; vertical-align: -3px; flex-shrink: 0; }
+        button .lucide, .btn-edit .lucide, .btn-del .lucide { margin-right: 6px; vertical-align: -3px; }
+        .btn-edit .lucide, .btn-del .lucide { width: 12px; height: 12px; margin-right: 0; }
+        h3 .lucide { width: 15px; height: 15px; vertical-align: -3px; margin-right: 5px; }
+        .sidebar-header .lucide { width: 20px; height: 20px; }
+        .sidebar-menu li .menu-icon .lucide { width: 18px; height: 18px; }
+        .btn-remove-logo .lucide, .btn-save .lucide { margin-right: 4px; }
+        /* ============================================================ */
+        /* MOBILE APP-LIKE NAVIGATION (top bar & bottom nav)             */
+        /* Tersembunyi di desktop, hanya tampil di breakpoint mobile     */
+        /* ============================================================ */
+        .mobile-topbar {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: 56px;
+            background: #1e293b;
+            color: #fff;
+            align-items: center;
+            padding: 0 16px;
+            font-size: 17px;
+            font-weight: 600;
+            z-index: 1100;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            padding-top: env(safe-area-inset-top);
+            height: calc(56px + env(safe-area-inset-top));
+        }
+        .bottom-nav {
+            display: none;
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            background: #ffffff;
+            border-top: 1px solid #e2e8f0;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.08);
+            z-index: 1100;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+        .bottom-nav-items { display: flex; }
+        .bottom-nav-item {
+            flex: 1;
+            background: none;
+            border: none;
+            padding: 8px 4px 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            color: #94a3b8;
+            font-size: 11px;
+            font-weight: 600;
+            border-radius: 0;
+            transition: color 0.15s;
+        }
+        .bottom-nav-item .lucide { width: 22px; height: 22px; margin-right: 0; }
+        .bottom-nav-item.active { color: #2563eb; }
+        .bottom-nav-item:active { background: rgba(37, 99, 235, 0.08); }
+
+        @media (max-width: 860px) {
+            .sidebar { display: none; }
+            .mobile-topbar, .bottom-nav { display: flex; }
+            .main-content {
+                margin-left: 0;
+                padding: 12px 12px calc(78px + env(safe-area-inset-bottom));
+                padding-top: calc(68px + env(safe-area-inset-top));
+            }
+            .transaksi-grid { flex-direction: column; }
+            .editor-col { width: 100%; }
+            .preview-col {
+                width: 100%;
+                min-width: 0;
+                position: static;
+                margin-top: 4px;
+                padding: 12px;
+            }
+            .mode-75mm, .mode-57mm { max-width: 100%; }
+            /* Mencegah auto-zoom iOS saat fokus ke input & bikin target sentuh lebih besar */
+            .form-group input, .form-group textarea, .form-group select,
+            button, .btn-edit, .btn-del { font-size: 16px; }
+            .btn-edit, .btn-del { font-size: 13px; padding: 6px 9px; }
+            button { padding: 12px 14px; }
+            .card { padding: 16px; border-radius: 14px; }
+        }
+
+        @media (max-width: 400px) {
+            .row-inputs { flex-direction: column; gap: 0; }
+        }
+
+        @media print {
+            .mobile-topbar, .bottom-nav { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-shell">
+    <!-- MOBILE TOP APP BAR (hanya tampil di layar kecil) -->
+    <div class="mobile-topbar">
+        <span id="mobileTopbarTitle">Transaksi</span>
+    </div>
+
+    <!-- SIDEBAR NAVIGASI (desktop) -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <span class="menu-icon"><i data-lucide="store"></i></span>
+            <span class="menu-text">Cloud POS Kasir</span>
+        </div>
+        <ul class="sidebar-menu">
+            <li id="menu-transaksi" class="active" onclick="switchTab('transaksi')">
+                <span class="menu-icon"><i data-lucide="shopping-cart"></i></span>
+                <span class="menu-text">Transaksi</span>
+            </li>
+            <li id="menu-riwayat" onclick="switchTab('riwayat')">
+                <span class="menu-icon"><i data-lucide="history"></i></span>
+                <span class="menu-text">Riwayat Transaksi</span>
+            </li>
+            <li id="menu-setting" onclick="switchTab('setting')">
+                <span class="menu-icon"><i data-lucide="settings"></i></span>
+                <span class="menu-text">Pengaturan Toko & API</span>
+            </li>
+        </ul>
+    </div>
+
+    <!-- BOTTOM NAVIGATION (mobile, gaya aplikasi Android) -->
+    <nav class="bottom-nav">
+        <div class="bottom-nav-items">
+            <button type="button" id="navbtm-transaksi" class="bottom-nav-item active" onclick="switchTab('transaksi')">
+                <i data-lucide="shopping-cart"></i>
+                <span>Transaksi</span>
+            </button>
+            <button type="button" id="navbtm-riwayat" class="bottom-nav-item" onclick="switchTab('riwayat')">
+                <i data-lucide="history"></i>
+                <span>Riwayat</span>
+            </button>
+            <button type="button" id="navbtm-setting" class="bottom-nav-item" onclick="switchTab('setting')">
+                <i data-lucide="settings"></i>
+                <span>Pengaturan</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+
+        <!-- ========================================================= -->
+        <!-- TAB 1: TRANSAKSI & EDITOR -->
+        <!-- ========================================================= -->
+        <div id="tab-transaksi" class="tab-content active">
+            <div class="transaksi-grid">
+                
+                <!-- COLUMN LEFT: EDITOR PANEL -->
+                <div class="editor-col">
+                    
+                    <div class="card" style="background: #eff6ff; border: 1px solid #bfdbfe;">
+                        <h3><i data-lucide="store"></i>Pilih Toko Operasional</h3>
+                        <div class="form-group">
+                            <label>Toko Terdaftar (Profil Multi Toko)</label>
+                            <select id="selectStoreProfile" onchange="onStoreSelectChange()">
+                                <option value="">-- Pilih Toko (Atur di Tab Pengaturan) --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3>1. Pilih Template Layout Struk (10 Template Asli)</h3>
+                        <div class="form-group">
+                            <label>Gaya Struk</label>
+                            <select id="selectTplMode" onchange="switchTemplate()" style="font-weight: bold; color: #1e293b; background: #f0fdf4; border: 1px solid #16a34a; padding: 10px;">
+                                <option value="classic">Template 1: Klasik Standar</option>
+                                <option value="modern">Template 2: Minimalis Modern</option>
+                                <option value="retro">Template 3: Retro Swalayan</option>
+                                <option value="boutique">Template 4: Elegant Boutique</option>
+                                <option value="compact">Template 5: Ringkas Eco</option>
+                                <option value="printing">Template 6: Percetakan / Printing</option>
+                                <option value="aesculapius" selected>Template 7: Alkes Aesculapius</option>
+                                <option value="toserba">Template 8: Toserba Dot-Matrix</option>
+                                <option value="retailindo">Template 9: Corporate Retail</option>
+                                <option value="apoteksehat">Template 10: Apotek Sehat QR</option>
+                            </select>
+                        </div>
+
+                        <div class="row-inputs">
+                            <div class="form-group">
+                                <label>Ukuran Kertas Kasir</label>
+                                <select id="selectPaperMode" onchange="switchPaperMode()">
+                                    <option value="75mm" selected>Kasir Standar (75mm)</option>
+                                    <option value="57mm">Thermal Mini (57mm)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Mode Validasi Kode</label>
+                                <select id="selectCodeType" onchange="switchCodeType()">
+                                    <option value="qrcode" selected>QR Code Digital</option>
+                                    <option value="barcode">Barcode Garis 128</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3>2. Status Pembayaran & Pengerjaan</h3>
+                        <div class="row-inputs">
+                            <div class="form-group">
+                                <label>Status Transaksi</label>
+                                <select id="inputStatusPembayaran" onchange="togglePaymentStatus()">
+                                    <option value="lunas" selected>LUNAS</option>
+                                    <option value="unpaid">BELUM BAYAR</option>
+                                    <option value="dp">DP / Uang Muka</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Status Pesanan / Pengerjaan</label>
+                                <select id="inputStatusProses" onchange="renderItems()">
+                                    <option value="Proses">Proses</option>
+                                    <option value="Selesai" selected>Selesai</option>
+                                    <option value="Diambil">Diambil</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div id="groupDPInput" class="form-group" style="display: none; background: #fffaf0; padding: 10px; border-radius: 6px; border: 1px solid #fbd38d;">
+                            <label style="color: #c05621;">Nominal DP / Uang Muka (Rp)</label>
+                            <input type="number" id="inputDPVal" value="0" placeholder="Masukkan jumlah DP" oninput="renderItems()">
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3>3. Data Toko, Admin & Pelanggan</h3>
+                        <div class="form-group">
+                            <label>Upload Logo Toko (Kop Struk)</label>
+                            <input type="file" id="inputLogo" accept="image/*" onchange="handleLogoUpload(event)">
+                            <button class="btn-remove-logo" onclick="removeLogo()"><i data-lucide="trash-2"></i>Hapus Logo</button>
+                        </div>
+                        <div class="form-group">
+                            <label>Nama Toko / Usaha</label>
+                            <input type="text" id="inputNamaToko" value="AESCULAPIUS ALAUDIN" oninput="updateReceipt()">
+                        </div>
+                        <div class="form-group">
+                            <label>Alamat Toko</label>
+                            <input type="text" id="inputAlamat" value="Jl. Sultan Alauddin Depan Univ. Muhammadiyah" oninput="updateReceipt()">
+                        </div>
+                        <div class="form-group">
+                            <label>Tanggal & Jam Transaksi</label>
+                            <div style="display:flex; gap:6px;">
+                                <input type="datetime-local" id="inputTanggalManual" step="1" oninput="applyManualTanggal()" style="flex:1;">
+                                <button type="button" onclick="resetTanggalSekarang()" title="Gunakan waktu sekarang" style="background:#64748b; color:#fff; padding:8px 10px; white-space:nowrap;"><i data-lucide="clock"></i>Sekarang</button>
+                            </div>
+                        </div>
+                        <div class="row-inputs">
+                            <div class="form-group">
+                                <label>Kode Transaksi / Struk</label>
+                                <div style="display:flex; gap:6px;">
+                                    <input type="text" id="inputNoStruk" value="JL-AAL-0095090" oninput="updateReceipt()" style="flex:1;">
+                                    <button type="button" onclick="generateNoStruk()" title="Buat nomor struk baru otomatis" style="background:#0284c7; color:#fff; padding:8px 10px; white-space:nowrap;"><i data-lucide="refresh-cw"></i>No. Baru</button>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>No. Telp / WA</label>
+                                <input type="text" id="inputTelp" value="(0411) 8988971 / 081232757979" oninput="updateReceipt()">
+                            </div>
+                        </div>
+                        <div class="row-inputs">
+                            <div class="form-group">
+                                <label>Nama Admin / Kasir</label>
+                                <input type="text" id="inputAdmin" value="GERY" oninput="updateReceipt()">
+                            </div>
+                            <div class="form-group">
+                                <label>Nama Pelanggan / Member</label>
+                                <input type="text" id="inputPelanggan" value="UMUM" oninput="updateReceipt()">
+                            </div>
+                        </div>
+                        <div class="row-inputs">
+                            <div class="form-group">
+                                <label>NPWP Toko / Perusahaan</label>
+                                <input type="text" id="inputNPWP" value="031.804.818.8.518.000" oninput="updateReceipt()">
+                            </div>
+                            <div class="form-group">
+                                <label>Kode NMID / QRIS Digital</label>
+                                <input type="text" id="inputNMID" value="ID1025468083346" oninput="updateReceipt()">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Pesan Tambahan / Catatan Footer Struk</label>
+                            <textarea id="inputCatatan" rows="2" oninput="updateReceipt()">Terima kasih telah berbelanja di toko kami.</textarea>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3>4. Tambah Barang Belanja</h3>
+                        <div class="form-group">
+                            <label>Nama Barang / Produk</label>
+                            <input type="text" id="inputItemNama" placeholder="Contoh: Alkohol 70% 1 L Medika">
+                        </div>
+                        <div class="row-inputs">
+                            <div class="form-group">
+                                <label>Harga Satuan (Rp)</label>
+                                <input type="number" id="inputItemHarga" placeholder="34000">
+                            </div>
+                            <div class="form-group">
+                                <label>Qty</label>
+                                <input type="number" id="inputItemQty" value="1">
+                            </div>
+                            <div class="form-group">
+                                <label>Satuan (PCS/Box/Unit)</label>
+                                <input type="text" id="inputItemSatuan" value="PCS">
+                            </div>
+                        </div>
+                        <button class="btn-add" id="btnAddItem" onclick="saveItem()"><i data-lucide="plus"></i>Tambah ke Daftar Belanja</button>
+                        <button class="btn-save" id="btnCancelEdit" style="display:none; margin-top:6px; background:#94a3b8;" onclick="cancelEditItem()"><i data-lucide="x"></i>Batal Edit</button>
+                    </div>
+
+                    <div class="card">
+                        <h3>5. Pembayaran & Diskon</h3>
+                        <div class="row-inputs">
+                            <div class="form-group">
+                                <label>Jenis Diskon</label>
+                                <select id="inputDiskonType" onchange="renderItems()">
+                                    <option value="nominal">Nominal Langsung (Rp)</option>
+                                    <option value="percent">Persentase (%)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label id="labelDiskonVal">Nilai Diskon</label>
+                                <input type="number" id="inputDiskonVal" value="0" oninput="renderItems()">
+                            </div>
+                        </div>
+                        <div class="form-group" id="groupBayarTunai">
+                            <label>Nominal Pembayaran Tunai / Digital (Rp)</label>
+                            <input type="number" id="inputBayar" value="0" oninput="renderItems()">
+                        </div>
+                        <button class="btn-primary" style="padding: 12px; margin-top: 10px;" onclick="saveTransactionCloud()"><i data-lucide="cloud-upload"></i>SIMPAN TRANSAKSI KE GOOGLE SHEETS</button>
+                    </div>
+
+                </div>
+
+                <!-- COLUMN RIGHT: PREVIEW STRUK PANEL -->
+                <div class="preview-col">
+                    <div id="receiptContainer" class="receipt-container mode-75mm tpl-aesculapius">
+                        
+                        <!-- Dynamic Header Logo & Main Info -->
+                        <div class="receipt-header">
+                            <img id="previewLogo" class="receipt-logo" alt="Logo Toko">
+                            <h3 id="previewNamaToko">AESCULAPIUS ALAUDIN</h3>
+                            <p id="previewAlamat">Jl. Sultan Alauddin Depan Univ. Muhammadiyah</p>
+                            <p id="previewTelp">Telp: (0411) 8988971</p>
+                        </div>
+
+                        <!-- Block NPWP (Template 9 & Korporat) -->
+                        <div id="npwpBlock" class="npwp-block" style="display:none;">
+                            NPWP: <span id="previewNPWP">031.804.818.8.518.000</span>
+                        </div>
+
+                        <!-- Meta Grid (Template 7, 8, 9, 10, dll) -->
+                        <div id="metaGridBlock" class="meta-grid">
+                            <div><span>No. Struk : <span id="previewNoStruk">JL-AAL-0095090</span></span></div>
+                            <div><span>Tanggal : <span id="previewTanggal">17/06/2026 08:51:09</span></span></div>
+                            <div><span>Kasir : <span id="previewAdmin">GERY</span></span><span>Pelanggan : <span id="previewPelanggan">UMUM</span></span></div>
+                        </div>
+
+                        <!-- Meta Block Standard/Printing (Template 1-6) -->
+                        <div id="metaBlock" class="meta-block" style="display:none;">
+                            <div>Kode Transaksi : <span id="previewNoStrukMeta">JL-AAL-0095090</span></div>
+                            <div id="previewTanggalMeta">17 Jun 2026 - 08:51:09</div>
+                            <div>Kasir / Admin : <span id="previewAdminMeta">GERY</span></div>
+                            <div>Pelanggan / Member : <span id="previewPelangganMeta">UMUM</span></div>
+                        </div>
+
+                        <div class="divider"></div>
+
+                        <!-- Item Table Terintegrasi Dynamic Header & Row -->
+                        <table class="receipt-table">
+                            <thead id="receiptTableHeader">
+                                <tr>
+                                    <th>BARANG</th>
+                                    <th class="text-center">QTY</th>
+                                    <th class="text-right">TOTAL</th>
+                                    <th class="btn-del"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="itemList"></tbody>
+                        </table>
+
+                        <div class="divider"></div>
+
+                        <!-- Ringkasan Nilai Belanja -->
+                        <table class="receipt-summary">
+                            <tr id="rowSubTotal">
+                                <td>Subtotal:</td>
+                                <td class="text-right" id="subTotal">Rp 0</td>
+                            </tr>
+                            <tr id="rowDiskon">
+                                <td id="diskonLabel">Diskon:</td>
+                                <td class="text-right" id="diskonVal">Rp 0</td>
+                            </tr>
+                            <tr id="rowPembulatan" style="display:none;">
+                                <td>Pembulatan:</td>
+                                <td class="text-right" id="pembulatanVal">Rp 0</td>
+                            </tr>
+                            <tr class="grand-total">
+                                <td>Grand Total:</td>
+                                <td class="text-right" id="grandTotal">Rp 1.070.000</td>
+                            </tr>
+                        </table>
+
+                        <!-- Status Pembayaran Standard Dynamic -->
+                        <div id="standardStatusRowsContainer">
+                            <table class="receipt-summary">
+                                <tbody id="paymentStatusRows"></tbody>
+                            </table>
+                        </div>
+
+                        <!-- Status Pembayaran Tambahan (Template 6 Printing) -->
+                        <div id="statusBlock" class="status-block" style="display:none;">
+                            <div class="divider"></div>
+                            <div>Pembayaran : <span id="textStatusBayar" style="font-weight:bold;">LUNAS</span></div>
+                            <div>Status Pesanan : <span id="textStatusProses">Selesai</span></div>
+                        </div>
+
+                        <!-- Dynamic Header / NMID khusus Printing & Digital QR -->
+                        <div id="printingBrandBlock" class="printing-brand" style="display:none;">
+                            <div id="brandNameUpper">AESCULAPIUS ALAUDIN</div>
+                            <div style="font-weight:normal; margin-top:3px;">NMID : <span id="previewNMID">ID1025468083346</span></div>
+                        </div>
+
+                        <!-- Deskripsi Keterangan Unik Tiap Template -->
+                        <div id="previewTemplateNotice" class="template-notice"></div>
+
+                        <!-- Catatan Footer Tambahan -->
+                        <div class="receipt-footer">
+                            <p id="previewCatatan">Terima kasih telah berbelanja di toko kami.</p>
+                        </div>
+
+                        <!-- Barcode Garis / QR Code Dynamic -->
+                        <div class="barcode-container">
+                            <svg id="previewBarcode" style="display: none;"></svg>
+                            <canvas id="previewQRCodeCanvas" style="display: none;"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- ACTION BUTTONS PANEL -->
+                    <div style="width: 100%; margin-top: 15px; display: flex; flex-direction: column; gap: 8px;">
+                        <button class="btn-print" onclick="window.print()"><i data-lucide="printer"></i>CETAK STRUK DIRECT PRINT</button>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn-pdf" onclick="downloadPDF()"><i data-lucide="file-text"></i>DOWNLOAD PDF</button>
+                            <button class="btn-jpg" onclick="downloadJPG()"><i data-lucide="image"></i>DOWNLOAD JPG</button>
+                        </div>
+
+                        <div class="no-print" style="width:100%; margin-top:6px; padding-top:10px; border-top:1px dashed #94a3b8;">
+                            <div id="btPrinterStatus" style="font-size:11px; color:#475569; margin-bottom:6px; text-align:center;">Printer Bluetooth belum terhubung</div>
+                            <div style="display:flex; gap:8px;">
+                                <button type="button" id="btnBtConnect" style="background:#0ea5e9; color:#fff; flex:1;" onclick="connectBluetoothPrinter()"><i data-lucide="bluetooth"></i>Sambungkan</button>
+                                <button type="button" style="background:#0369a1; color:#fff; flex:1;" onclick="printReceiptBluetooth()"><i data-lucide="printer"></i>Cetak Bluetooth</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- TAB 2: RIWAYAT TRANSAKSI -->
+        <!-- ========================================================= -->
+        <div id="tab-riwayat" class="tab-content">
+            <div class="card">
+                <h3><i data-lucide="history"></i>Riwayat Transaksi Tersimpan</h3>
+                <button class="btn-primary" style="width: auto; margin-bottom: 15px;" onclick="fetchTransactionsCloud()"><i data-lucide="refresh-cw"></i>Muat Ulang Data dari Google Sheets</button>
+                <table class="table-custom">
+                    <thead>
+                        <tr>
+                            <th>No Struk</th>
+                            <th>Tanggal</th>
+                            <th>Toko</th>
+                            <th>Pelanggan</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyList">
+                        <tr><td colspan="7" style="text-align:center;">Belum ada riwayat transaksi.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- TAB 3: PENGATURAN TOKO & SPREADSHEET API -->
+        <!-- ========================================================= -->
+        <div id="tab-setting" class="tab-content">
+            <div class="card" style="background: #f0fdf4; border: 1px solid #bbf7d0;">
+                <h3><i data-lucide="globe"></i>Integrasi Google Sheets API</h3>
+                <div class="form-group">
+                    <label>URL Web App Google Apps Script</label>
+                    <input type="text" id="inputGasUrl" placeholder="https://script.google.com/macros/s/.../exec" oninput="saveGasUrl()">
+                </div>
+            </div>
+
+            <div class="card">
+                <h3><i data-lucide="store"></i>Kelola Profil Multi-Toko / Cabang</h3>
+                <div class="row-inputs">
+                    <div class="form-group"><label>ID Toko / Kode Unik</label><input type="text" id="storeId" placeholder="TOKO-01"></div>
+                    <div class="form-group"><label>Nama Toko / Usaha</label><input type="text" id="storeNama" placeholder="Klinik Alauddin"></div>
+                </div>
+                <div class="form-group"><label>Alamat Toko</label><input type="text" id="storeAlamat" placeholder="Jl. Sultan Alauddin"></div>
+                <div class="row-inputs">
+                    <div class="form-group"><label>No Telp / WA</label><input type="text" id="storeTelp" placeholder="(0411) 8988971"></div>
+                    <div class="form-group"><label>NPWP (Opsional)</label><input type="text" id="storeNpwp" placeholder="00.000.000.0-000.000"></div>
+                </div>
+                <div class="row-inputs">
+                    <div class="form-group"><label>NMID / QRIS (Opsional)</label><input type="text" id="storeNmid" placeholder="ID1025468083346"></div>
+                    <div class="form-group"><label>Catatan Default Struk</label><input type="text" id="storeCatatan" value="Terima kasih telah berbelanja di toko kami."></div>
+                </div>
+                <button class="btn-add" style="margin-top: 10px;" onclick="saveStoreProfile()"><i data-lucide="cloud-upload"></i>Simpan / Sync Profil Toko Ke Cloud</button>
+
+                <h4 style="margin-top: 20px;">Daftar Toko Terdaftar</h4>
+                <table class="table-custom">
+                    <thead>
+                        <tr>
+                            <th>ID Toko</th>
+                            <th>Nama Toko</th>
+                            <th>Alamat</th>
+                            <th>Telp</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="storeTableBody">
+                        <tr><td colspan="5" style="text-align:center;">Belum ada profil toko. Tambahkan di atas.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    // GLOBAL STATE & source of truth
+    let items = [];
+    let storesList = [];
+    let transactionsList = [];
+    let currentPaperMode = '75mm';
+    let currentTplMode = 'aesculapius';
+    let currentCodeType = 'qrcode';
+    let logoBase64 = '';
+
+    // MAPPING NOTICES 10 TEMPLATE ASLI
+    const templateNotices = {
+        classic: "• Struk ini adalah bukti transaksi sah.\n• Barang yang sudah dibeli tidak dapat ditukar/dikembalikan.",
+        modern: "✨ Terima kasih telah berbelanja!\nSimpan struk ini sebagai bukti pembayaran resmi & klaim garansi.",
+        retro: "=== PERHATIAN & SYARAT KASIR ===\n1. Periksa kembali uang kembalian & barang Anda.\n2. Retur barang maksimal 1x24 jam.",
+        boutique: "🌿 Terima kasih telah memilih produk kami.\nBarang dapat ditukar maksimal 3 hari dengan menunjukkan struk.",
+        compact: "[ BUKTI TRANSAKSI SAH ]\nSimpan struk ini untuk klaim garansi / retur.",
+        printing: "Catatan Pengerjaan:\nCetak/pesanan yang tidak diambil lebih dari 30 hari di luar tanggung jawab kami.",
+        aesculapius: "BARANG YG SDH DIBELI DAN DITEST TDK DAPAT DIKEMBALIKAN DGN ALASAN APAPUN",
+        toserba: "TERIMA KASIH ATAS KUNJUNGAN ANDA",
+        retailindo: "TERIMA KASIH\n#Untuk BKP, harga termasuk PPN\n#Barang yang sudah dibeli tidak dapat dikembalikan",
+        apoteksehat: "BARANG YG SDH DIBELI DAN DITEST TDK DPT DIKEMBALIKAN DGN ALASAN APAPUN.\nTERIMA KASIH ATAS KUNJUNGAN ANDA."
+    };
+
+    // FORMATTERS
+    function formatRupiah(angka) { return 'Rp ' + new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(angka); }
+    function formatBareRupiah(angka) { return new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(angka); }
+
+    // TAB NAVIGATION
+    function switchTab(tabName) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.sidebar-menu li').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.bottom-nav-item').forEach(el => el.classList.remove('active'));
+        
+        document.getElementById(`tab-${tabName}`).classList.add('active');
+        document.getElementById(`menu-${tabName}`).classList.add('active');
+
+        const navBtm = document.getElementById(`navbtm-${tabName}`);
+        if (navBtm) navBtm.classList.add('active');
+
+        const titles = { transaksi: 'Transaksi', riwayat: 'Riwayat Transaksi', setting: 'Pengaturan Toko & API' };
+        const topbarTitle = document.getElementById('mobileTopbarTitle');
+        if (topbarTitle) topbarTitle.innerText = titles[tabName] || 'Kasir POS';
+    }
+
+    // LOCAL STORAGE API URL
+    function saveGasUrl() { localStorage.setItem('pos_gas_url', document.getElementById('inputGasUrl').value.trim()); }
+    function getGasUrl() { return localStorage.getItem('pos_gas_url') || ''; }
+
+    // DYNAMIC DATE
+    function setTanggal(customDate) {
+        const now = customDate instanceof Date && !isNaN(customDate) ? customDate : new Date();
+        const months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'];
+        const monthsText = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+        
+        const tglStr = now.getDate() + '/' + months[now.getMonth()] + '/' + now.getFullYear();
+        const tglTextStr = now.getDate() + ' ' + monthsText[now.getMonth()] + ' ' + now.getFullYear();
+        const jamStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(/\./g, ':');
+        
+        document.getElementById('previewTanggal').innerText = `${tglStr} ${jamStr}`;
+        document.getElementById('previewTanggalMeta').innerText = `${tglTextStr} - ${jamStr}`;
+    }
+
+    // Format Date -> string yang cocok utk value input type="datetime-local" (YYYY-MM-DDTHH:mm:ss)
+    function toDatetimeLocalValue(d) {
+        const pad = n => String(n).padStart(2, '0');
+        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    }
+
+    // Dipanggil saat kasir mengubah tanggal/jam transaksi secara manual (mis. untuk transaksi susulan/backdate)
+    function applyManualTanggal() {
+        const val = document.getElementById('inputTanggalManual').value;
+        if (!val) { setTanggal(); return; }
+        const d = new Date(val);
+        if (isNaN(d.getTime())) return;
+        setTanggal(d);
+        generateNoStruk(); // nomor struk ikut mengikuti tanggal aktif (penting utk transaksi backdate)
+    }
+
+    // Kembalikan tanggal/jam transaksi ke waktu sekarang
+    function resetTanggalSekarang() {
+        const now = new Date();
+        document.getElementById('inputTanggalManual').value = toDatetimeLocalValue(now);
+        setTanggal(now);
+        generateNoStruk();
+    }
+
+    // Tanggal transaksi yang sedang aktif (mengikuti input manual jika diisi, jika tidak pakai waktu sekarang)
+    function getActiveTransactionDate() {
+        const el = document.getElementById('inputTanggalManual');
+        if (el && el.value) {
+            const d = new Date(el.value);
+            if (!isNaN(d.getTime())) return d;
+        }
+        return new Date();
+    }
+
+    // AUTO-GENERATE NOMOR STRUK
+    // Format: KODETOKO-YYYYMMDD-0001 (counter reset otomatis tiap hari & tiap toko, tersimpan di localStorage)
+    function generateNoStruk() {
+        const storeIdx = document.getElementById('selectStoreProfile').value;
+        let kodeToko;
+
+        if (storeIdx !== '' && storesList[storeIdx] && storesList[storeIdx].id) {
+            kodeToko = storesList[storeIdx].id;
+        } else {
+            // Fallback: ambil inisial dari Nama Toko yang sedang diisi manual
+            const namaToko = document.getElementById('inputNamaToko').value || 'TOKO';
+            kodeToko = namaToko.trim().split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 5) || 'TOKO';
+        }
+        kodeToko = kodeToko.toUpperCase().replace(/[^A-Z0-9]/g, '') || 'TOKO';
+
+        const now = getActiveTransactionDate();
+        const tglKey = now.getFullYear() + String(now.getMonth() + 1).padStart(2, '0') + String(now.getDate()).padStart(2, '0');
+
+        const counterKey = `pos_counter_${kodeToko}_${tglKey}`;
+        const counter = parseInt(localStorage.getItem(counterKey) || '0', 10) + 1;
+        localStorage.setItem(counterKey, counter);
+
+        const noStruk = `${kodeToko}-${tglKey}-${String(counter).padStart(4, '0')}`;
+        document.getElementById('inputNoStruk').value = noStruk;
+        updateReceipt();
+    }
+
+    // SWITCHERS
+    function switchPaperMode() {
+        currentPaperMode = document.getElementById('selectPaperMode').value;
+        applyContainerClasses();
+        updateCodeVisual();
+    }
+
+    function switchTemplate() {
+        currentTplMode = document.getElementById('selectTplMode').value;
+        applyContainerClasses();
+        updateTemplateNotice();
+        renderItems();
+        updateCodeVisual();
+    }
+
+    function switchCodeType() {
+        currentCodeType = document.getElementById('selectCodeType').value;
+        updateCodeVisual();
+    }
+
+    function updateTemplateNotice() {
+        document.getElementById('previewTemplateNotice').innerText = templateNotices[currentTplMode] || templateNotices['classic'];
+    }
+
+    function applyContainerClasses() {
+        const container = document.getElementById('receiptContainer');
+        container.className = `receipt-container mode-${currentPaperMode} tpl-${currentTplMode}`;
+
+        const metaBlock = document.getElementById('metaBlock');
+        const metaGridBlock = document.getElementById('metaGridBlock');
+        const npwpBlock = document.getElementById('npwpBlock');
+        const statusBlock = document.getElementById('statusBlock');
+        const stdStatus = document.getElementById('standardStatusRowsContainer');
+        const brandBlock = document.getElementById('printingBrandBlock');
+        const rowPembulatan = document.getElementById('rowPembulatan');
+
+        metaBlock.style.display = (currentTplMode === 'printing' || currentTplMode === 'classic' || currentTplMode === 'modern' || currentTplMode === 'boutique') ? 'block' : 'none';
+        statusBlock.style.display = (currentTplMode === 'printing') ? 'block' : 'none';
+        brandBlock.style.display = (currentTplMode === 'printing') ? 'block' : 'none';
+        
+        metaGridBlock.style.display = (currentTplMode === 'aesculapius' || currentTplMode === 'toserba' || currentTplMode === 'retailindo' || currentTplMode === 'apoteksehat' || currentTplMode === 'retro' || currentTplMode === 'compact') ? 'block' : 'none';
+        npwpBlock.style.display = (currentTplMode === 'retailindo') ? 'block' : 'none';
+        rowPembulatan.style.display = (currentTplMode === 'retailindo') ? '' : 'none';
+
+        stdStatus.style.display = (currentTplMode !== 'printing') ? 'block' : 'none';
+    }
+
+    function togglePaymentStatus() {
+        const status = document.getElementById('inputStatusPembayaran').value;
+        const dpGroup = document.getElementById('groupDPInput');
+        const bayarGroup = document.getElementById('groupBayarTunai');
+
+        if (status === 'dp') {
+            dpGroup.style.display = 'block';
+            bayarGroup.style.display = 'none';
+        } else if (status === 'unpaid') {
+            dpGroup.style.display = 'none';
+            bayarGroup.style.display = 'none';
+        } else {
+            dpGroup.style.display = 'none';
+            bayarGroup.style.display = 'block';
+        }
+        renderItems();
+    }
+
+    // LOGO HANDLERS
+    function handleLogoUpload(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                logoBase64 = e.target.result;
+                displayLogo(logoBase64);
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    function displayLogo(src) {
+        const logoImg = document.getElementById('previewLogo');
+        if (src) {
+            logoImg.src = src;
+            logoImg.style.display = 'block';
+        } else {
+            logoImg.src = '';
+            logoImg.style.display = 'none';
+        }
+    }
+
+    function removeLogo() {
+        logoBase64 = '';
+        document.getElementById('inputLogo').value = '';
+        displayLogo('');
+    }
+
+    // BARCODE & QR VISUALS
+    function updateCodeVisual() {
+        const noStruk = document.getElementById('inputNoStruk').value.trim() || '000000';
+        const grandTotalVal = document.getElementById('grandTotal').innerText;
+        const status = document.getElementById('inputStatusPembayaran').value;
+
+        const barcodeElem = document.getElementById('previewBarcode');
+        const qrCanvasElem = document.getElementById('previewQRCodeCanvas');
+
+        if (currentCodeType === 'barcode') {
+            qrCanvasElem.style.display = 'none';
+            barcodeElem.style.display = 'inline-block';
+
+            const barcodeWidth = currentPaperMode === '57mm' ? 1.1 : 1.4;
+            const barcodeHeight = currentPaperMode === '57mm' ? 24 : 32;
+            const fontSize = currentPaperMode === '57mm' ? 9 : 11;
+
+            try {
+                JsBarcode("#previewBarcode", noStruk, {
+                    format: "CODE128", width: barcodeWidth, height: barcodeHeight, displayValue: true, fontSize: fontSize, font: "Arial", margin: 2
+                });
+            } catch(e) {}
+
+        } else if (currentCodeType === 'qrcode') {
+            barcodeElem.style.display = 'none';
+            qrCanvasElem.style.display = 'block';
+
+            const qrSize = currentPaperMode === '57mm' ? 100 : 130;
+            let statusText = 'LUNAS (SAH)';
+
+            if (status === 'dp') {
+                const dpVal = parseFloat(document.getElementById('inputDPVal').value) || 0;
+                statusText = `DP TERBAYAR: ${formatRupiah(dpVal)}`;
+            } else if (status === 'unpaid') {
+                statusText = 'BELUM DIBAYAR';
+            }
+
+            const qrText = `NO TRANSAKSI: ${noStruk}\nTOTAL: ${grandTotalVal}\nSTATUS: ${statusText}`;
+
+            try {
+                new QRious({ element: qrCanvasElem, value: qrText, size: qrSize, level: 'H' });
+            } catch(e) {}
+        }
+    }
+
+    function updateReceipt() {
+        const storeName = document.getElementById('inputNamaToko').value;
+        document.getElementById('previewNamaToko').innerText = storeName;
+        document.getElementById('brandNameUpper').innerText = storeName.toUpperCase();
+        document.getElementById('previewAlamat').innerText = document.getElementById('inputAlamat').value;
+        document.getElementById('previewTelp').innerText = 'Telp: ' + document.getElementById('inputTelp').value;
+        document.getElementById('previewCatatan').innerText = document.getElementById('inputCatatan').value;
+        
+        const noStruk = document.getElementById('inputNoStruk').value;
+        document.getElementById('previewNoStruk').innerText = noStruk;
+        document.getElementById('previewNoStrukMeta').innerText = noStruk;
+        
+        const admin = document.getElementById('inputAdmin').value;
+        document.getElementById('previewAdmin').innerText = admin;
+        document.getElementById('previewAdminMeta').innerText = admin;
+        
+        const pelanggan = document.getElementById('inputPelanggan').value;
+        document.getElementById('previewPelanggan').innerText = pelanggan;
+        document.getElementById('previewPelangganMeta').innerText = pelanggan;
+        
+        document.getElementById('previewNPWP').innerText = document.getElementById('inputNPWP').value;
+        document.getElementById('previewNMID').innerText = document.getElementById('inputNMID').value;
+        
+        updateCodeVisual();
+    }
+
+    // editingItemIndex === -1 artinya mode "tambah baru", >= 0 artinya sedang mengedit items[index]
+    let editingItemIndex = -1;
+
+    function saveItem() {
+        const nama = document.getElementById('inputItemNama').value;
+        const harga = parseFloat(document.getElementById('inputItemHarga').value);
+        const qty = parseInt(document.getElementById('inputItemQty').value);
+        const satuan = document.getElementById('inputItemSatuan').value || 'PCS';
+
+        if (!nama || isNaN(harga) || harga < 0 || isNaN(qty) || qty <= 0) {
+            alert("Mohon isi nama barang, harga, dan QTY dengan benar!"); return;
+        }
+
+        const total = harga * qty;
+
+        if (editingItemIndex === -1) {
+            items.push({ nama, harga, qty, satuan, total });
+        } else {
+            items[editingItemIndex] = { nama, harga, qty, satuan, total };
+        }
+
+        cancelEditItem(); // keluar dari mode edit (jika aktif) & bersihkan form
+        renderItems();
+    }
+
+    function editItem(index) {
+        const item = items[index];
+        if (!item) return;
+
+        document.getElementById('inputItemNama').value = item.nama;
+        document.getElementById('inputItemHarga').value = item.harga;
+        document.getElementById('inputItemQty').value = item.qty;
+        document.getElementById('inputItemSatuan').value = item.satuan;
+
+        editingItemIndex = index;
+        const btn = document.getElementById('btnAddItem');
+        btn.innerHTML = '<i data-lucide="save"></i>Simpan Perubahan Barang';
+        btn.style.backgroundColor = '#2563eb';
+        document.getElementById('btnCancelEdit').style.display = 'block';
+
+        document.getElementById('inputItemNama').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        renderItems(); // supaya baris yang sedang diedit ter-highlight
+    }
+
+    function cancelEditItem() {
+        editingItemIndex = -1;
+
+        const btn = document.getElementById('btnAddItem');
+        btn.innerHTML = '<i data-lucide="plus"></i>Tambah ke Daftar Belanja';
+        btn.style.backgroundColor = '';
+        document.getElementById('btnCancelEdit').style.display = 'none';
+
+        document.getElementById('inputItemNama').value = '';
+        document.getElementById('inputItemHarga').value = '';
+        document.getElementById('inputItemQty').value = '1';
+        document.getElementById('inputItemSatuan').value = 'PCS';
+        renderItems();
+    }
+
+    function deleteItem(index) {
+        if (index === editingItemIndex) cancelEditItem(); // batalkan mode edit jika item yg diedit dihapus
+        items.splice(index, 1);
+        renderItems();
+    }
+
+    function renderItems() {
+        const tbody = document.getElementById('itemList');
+        const header = document.getElementById('receiptTableHeader');
+        tbody.innerHTML = '';
+        let subtotal = 0;
+        let totalQtySum = 0;
+
+        items.forEach((item, index) => {
+            subtotal += item.total;
+            totalQtySum += item.qty;
+            const row = document.createElement('tr');
+            if (index === editingItemIndex) row.style.background = '#dbeafe';
+
+            if (currentTplMode === 'aesculapius' || currentTplMode === 'apoteksehat') {
+                header.style.display = '';
+                header.innerHTML = `
+                    <tr>
+                        <th colspan="2" style="text-align:left;">BARANG</th>
+                        <th style="text-align:right;">SATUAN</th>
+                        <th class="btn-del"></th>
+                    </tr>
+                `;
+                row.innerHTML = `
+                    <td colspan="3" style="padding: 2px 0;">
+                        <div style="display:flex; justify-content:space-between; font-weight:bold;">
+                            <span>${item.nama}</span>
+                            <span>${item.satuan}</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; font-size:0.9em;">
+                            <span>${item.qty} @ ${formatBareRupiah(item.harga)}</span>
+                            <span>0</span>
+                            <span>${formatBareRupiah(item.total)}</span>
+                        </div>
+                    </td>
+                    <td class="btn-del" style="width:15px; vertical-align:middle; text-align:right; white-space:nowrap;">
+                        <button class="btn-edit" onclick="editItem(${index})"><i data-lucide="pencil"></i></button>
+                        <button class="btn-del" onclick="deleteItem(${index})"><i data-lucide="trash-2"></i></button>
+                    </td>
+                `;
+            } else if (currentTplMode === 'toserba') {
+                header.style.display = '';
+                header.innerHTML = `
+                    <tr>
+                        <th colspan="3" style="text-align:left;">NO. BARANG &nbsp;&nbsp;&nbsp;&nbsp; QTY x HARGA = TOTAL</th>
+                        <th class="btn-del"></th>
+                    </tr>
+                `;
+                row.innerHTML = `
+                    <td colspan="3" style="padding: 2px 0;">
+                        <div style="display:flex; justify-content:space-between;">
+                            <span>${index + 1}. ${item.nama.toUpperCase()}</span>
+                            <span>${formatBareRupiah(item.total)}</span>
+                        </div>
+                        <div style="font-size:0.88em; padding-left:10px;">
+                            ${item.qty} ${item.satuan} x ${formatBareRupiah(item.harga)}
+                        </div>
+                    </td>
+                    <td class="btn-del" style="vertical-align:middle; text-align:right; white-space:nowrap;">
+                        <button class="btn-edit" onclick="editItem(${index})"><i data-lucide="pencil"></i></button>
+                        <button class="btn-del" onclick="deleteItem(${index})"><i data-lucide="trash-2"></i></button>
+                    </td>
+                `;
+            } else if (currentTplMode === 'retailindo') {
+                header.style.display = 'none';
+                row.innerHTML = `
+                    <td colspan="3" style="padding: 3px 0;">
+                        <div>${item.qty} ${item.satuan} x @ ${formatBareRupiah(item.harga)}</div>
+                        <div style="display:flex; justify-content:space-between; font-weight:bold;">
+                            <span>${item.nama.toUpperCase()}</span>
+                            <span>${formatBareRupiah(item.total)}</span>
+                        </div>
+                    </td>
+                    <td class="btn-del" style="vertical-align:middle; text-align:right; white-space:nowrap;">
+                        <button class="btn-edit" onclick="editItem(${index})"><i data-lucide="pencil"></i></button>
+                        <button class="btn-del" onclick="deleteItem(${index})"><i data-lucide="trash-2"></i></button>
+                    </td>
+                `;
+            } else if (currentTplMode === 'printing') {
+                header.style.display = 'none';
+                row.innerHTML = `
+                    <td colspan="3" style="padding: 3px 0;">
+                        <div style="font-weight:bold;">${item.nama}</div>
+                        <div style="display:flex; justify-content:space-between;">
+                            <span>@${formatBareRupiah(item.harga)} x ${item.qty} ${item.satuan}</span>
+                            <span>${formatRupiah(item.total)}</span>
+                        </div>
+                    </td>
+                    <td class="btn-del text-right" style="vertical-align:middle; width:20px; white-space:nowrap;">
+                        <button class="btn-edit" onclick="editItem(${index})"><i data-lucide="pencil"></i></button>
+                        <button class="btn-del" onclick="deleteItem(${index})"><i data-lucide="trash-2"></i></button>
+                    </td>
+                `;
+            } else {
+                header.style.display = '';
+                header.innerHTML = `
+                    <tr>
+                        <th>ITEM</th>
+                        <th class="text-center">QTY</th>
+                        <th class="text-right">TOTAL</th>
+                        <th class="btn-del"></th>
+                    </tr>
+                `;
+                row.innerHTML = `
+                    <td>
+                        <div style="font-weight:bold;">${item.nama}</div>
+                        <div style="font-size:0.85em; color:#555;">@ ${formatRupiah(item.harga)} / ${item.satuan}</div>
+                    </td>
+                    <td class="text-center" style="vertical-align:middle;">${item.qty}</td>
+                    <td class="text-right" style="vertical-align:middle;">${formatRupiah(item.total)}</td>
+                    <td class="btn-del text-right" style="vertical-align:middle; white-space:nowrap;">
+                        <button class="btn-edit" onclick="editItem(${index})"><i data-lucide="pencil"></i></button>
+                        <button class="btn-del" onclick="deleteItem(${index})"><i data-lucide="trash-2"></i></button>
+                    </td>
+                `;
+            }
+            tbody.appendChild(row);
+        });
+
+        // Hitung Diskon & Total
+        const diskonType = document.getElementById('inputDiskonType').value;
+        const diskonInput = parseFloat(document.getElementById('inputDiskonVal').value) || 0;
+        let diskonNominal = (diskonType === 'percent') ? (subtotal * diskonInput) / 100 : diskonInput;
+        const grandTotal = Math.max(0, subtotal - diskonNominal);
+
+        document.getElementById('subTotal').innerText = formatRupiah(subtotal);
+        document.getElementById('diskonVal').innerText = diskonNominal > 0 ? '-' + formatRupiah(diskonNominal) : 'Rp 0';
+        document.getElementById('grandTotal').innerText = formatRupiah(grandTotal);
+
+        // Status Rows Rendering
+        const status = document.getElementById('inputStatusPembayaran').value;
+        const statusProses = document.getElementById('inputStatusProses').value;
+        const statusRows = document.getElementById('paymentStatusRows');
+        statusRows.innerHTML = '';
+
+        const bayar = parseFloat(document.getElementById('inputBayar').value) || 0;
+        const kembali = Math.max(0, bayar - grandTotal);
+
+        document.getElementById('textStatusBayar').innerText = status.toUpperCase();
+        document.getElementById('textStatusProses').innerText = statusProses;
+
+        if (currentTplMode === 'aesculapius' || currentTplMode === 'apoteksehat') {
+            const memberName = document.getElementById('inputPelanggan').value || 'UMUM';
+            statusRows.innerHTML = `
+                <tr><td>Total Qty:</td><td class="text-right">${totalQtySum} ITEM</td></tr>
+                <tr><td>Bayar:</td><td class="text-right">${formatRupiah(bayar)}</td></tr>
+                <tr><td>Kembali:</td><td class="text-right">${formatRupiah(kembali)}</td></tr>
+                <tr><td>Member:</td><td class="text-right">${memberName}</td></tr>
+            `;
+        } else if (currentTplMode === 'toserba') {
+            statusRows.innerHTML = `
+                <tr><td># QTY : ${totalQtySum}</td><td class="text-right">TOTAL : ${formatBareRupiah(grandTotal)}</td></tr>
+                <tr><td></td><td class="text-right">BAYAR : ${formatBareRupiah(bayar)}</td></tr>
+                <tr><td></td><td class="text-right">KEMBALI : ${formatBareRupiah(kembali)}</td></tr>
+            `;
+        } else if (currentTplMode === 'retailindo') {
+            document.getElementById('pembulatanVal').innerText = 'Rp 0';
+            statusRows.innerHTML = `
+                <tr><td>Total barang dibeli:</td><td class="text-right">${totalQtySum}</td></tr>
+                <tr><td>TUNAI:</td><td class="text-right">${formatRupiah(bayar)}</td></tr>
+                <tr><td>KEMBALI:</td><td class="text-right">${formatRupiah(kembali)}</td></tr>
+            `;
+        } else {
+            if (status === 'lunas') {
+                statusRows.innerHTML = `
+                    <tr><td>Bayar:</td><td class="text-right">${formatRupiah(bayar)}</td></tr>
+                    <tr><td>Kembali:</td><td class="text-right">${formatRupiah(kembali)}</td></tr>
+                    <tr><td>Status:</td><td class="text-right"><span class="status-badge status-lunas">LUNAS</span></td></tr>
+                `;
+            } else if (status === 'dp') {
+                const dpVal = parseFloat(document.getElementById('inputDPVal').value) || 0;
+                const sisa = Math.max(0, grandTotal - dpVal);
+                statusRows.innerHTML = `
+                    <tr><td>DP / Uang Muka:</td><td class="text-right">${formatRupiah(dpVal)}</td></tr>
+                    <tr style="font-weight:bold; color:#c05621;"><td>Kekurangan:</td><td class="text-right">${formatRupiah(sisa)}</td></tr>
+                    <tr><td>Status:</td><td class="text-right"><span class="status-badge status-dp">DP / UANG MUKA</span></td></tr>
+                `;
+            } else {
+                statusRows.innerHTML = `
+                    <tr><td>Status:</td><td class="text-right"><span class="status-badge status-unpaid">BELUM BAYAR</span></td></tr>
+                `;
+            }
+        }
+
+        updateCodeVisual();
+        if (window.lucide) lucide.createIcons();
+    }
+
+    // EXPORT PDF & JPG
+    function downloadJPG() {
+        const receipt = document.getElementById('receiptContainer');
+        const delBtns = receipt.querySelectorAll('.btn-del');
+        delBtns.forEach(btn => btn.style.display = 'none');
+
+        html2canvas(receipt, { scale: 3, useCORS: true }).then(canvas => {
+            const link = document.createElement('a');
+            const noStruk = document.getElementById('inputNoStruk').value.trim() || 'STRUK';
+            link.download = `${noStruk}_${currentTplMode}.jpg`;
+            link.href = canvas.toDataURL('image/jpeg', 0.95);
+            link.click();
+            delBtns.forEach(btn => btn.style.display = '');
+        });
+    }
+
+    function downloadPDF() {
+        const { jsPDF } = window.jspdf;
+        const receipt = document.getElementById('receiptContainer');
+        const delBtns = receipt.querySelectorAll('.btn-del');
+        delBtns.forEach(btn => btn.style.display = 'none');
+
+        html2canvas(receipt, { scale: 3, useCORS: true }).then(canvas => {
+            const imgData = canvas.toDataURL('image/png');
+            const pdfWidth = currentPaperMode === '75mm' ? 75 : 57;
+            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+            const pdf = new jsPDF({
+                orientation: 'p', unit: 'mm', format: [pdfWidth, pdfHeight]
+            });
+
+            const noStruk = document.getElementById('inputNoStruk').value.trim() || 'STRUK';
+            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+            pdf.save(`${noStruk}_${currentTplMode}.pdf`);
+            delBtns.forEach(btn => btn.style.display = '');
+        });
+    }
+
+    // ========================================================================
+    // CETAK VIA PRINTER BLUETOOTH (ESC/POS, thermal printer BLE)
+    // Catatan penting:
+    // - Hanya bekerja di browser yg mendukung Web Bluetooth (Chrome/Edge desktop & Android). Tidak ada dukungan di Safari/iOS/Firefox.
+    // - Hanya bisa konek ke printer Bluetooth Low Energy (BLE/GATT). Printer Bluetooth Classic/SPP TIDAK bisa diakses browser sama sekali.
+    // - UUID service di bawah adalah yg paling umum dipakai printer thermal BLE murah; kalau printer Anda tidak cocok,
+    //   kode ini otomatis mencoba mencari service+characteristic lain yang bisa ditulis.
+    // ========================================================================
+    const BLE_PRINTER_SERVICES = [
+        '000018f0-0000-1000-8000-00805f9b34fb', // umum dipakai banyak printer thermal BLE murah
+        '49535343-fe7d-4ae5-8fa9-9fafd205e455', // ISSC/"transparent UART" - dipakai Goojprt, Zjiang, dll
+        '0000ff00-0000-1000-8000-00805f9b34fb'  // varian lain yg cukup umum
+    ];
+
+    let btPrinterDevice = null;
+    let btPrinterCharacteristic = null;
+
+    function updateBtStatus(text) {
+        const el = document.getElementById('btPrinterStatus');
+        if (el) el.innerText = text;
+    }
+
+    function onBtDisconnected() {
+        btPrinterCharacteristic = null;
+        updateBtStatus('Printer Bluetooth terputus.');
+    }
+
+    async function connectBluetoothPrinter() {
+        if (!navigator.bluetooth) {
+            alert('Browser ini tidak mendukung Web Bluetooth.\n\nGunakan Google Chrome atau Microsoft Edge (di Android atau Desktop dengan Bluetooth aktif). Safari/iOS dan Firefox tidak didukung sama sekali oleh sistemnya sendiri.');
+            return;
+        }
+
+        try {
+            updateBtStatus('Membuka daftar perangkat Bluetooth...');
+            btPrinterDevice = await navigator.bluetooth.requestDevice({
+                acceptAllDevices: true,
+                optionalServices: BLE_PRINTER_SERVICES
+            });
+
+            updateBtStatus(`Menyambungkan ke ${btPrinterDevice.name || 'printer'}...`);
+            const server = await btPrinterDevice.gatt.connect();
+
+            let foundChar = null;
+
+            // 1) Coba service yg umum dipakai printer thermal BLE
+            for (const svcUuid of BLE_PRINTER_SERVICES) {
+                try {
+                    const service = await server.getPrimaryService(svcUuid);
+                    const chars = await service.getCharacteristics();
+                    foundChar = chars.find(c => c.properties.write || c.properties.writeWithoutResponse);
+                    if (foundChar) break;
+                } catch (e) { /* service ini tidak ada di printer, lanjut coba yang lain */ }
+            }
+
+            // 2) Fallback: pindai semua service yg di-advertise printer ini, cari characteristic yg bisa ditulis
+            if (!foundChar) {
+                const services = await server.getPrimaryServices();
+                for (const service of services) {
+                    try {
+                        const chars = await service.getCharacteristics();
+                        foundChar = chars.find(c => c.properties.write || c.properties.writeWithoutResponse);
+                        if (foundChar) break;
+                    } catch (e) { /* lewati service yg tidak bisa diakses */ }
+                }
+            }
+
+            if (!foundChar) {
+                throw new Error('Tidak ditemukan jalur tulis data (characteristic) di printer ini. Printer Anda kemungkinan memakai Bluetooth Classic/SPP, bukan BLE, sehingga tidak bisa diakses browser.');
+            }
+
+            btPrinterCharacteristic = foundChar;
+            btPrinterDevice.addEventListener('gattserverdisconnected', onBtDisconnected);
+            updateBtStatus(`Terhubung: ${btPrinterDevice.name || 'Printer BLE'}`);
+        } catch (err) {
+            btPrinterDevice = null;
+            btPrinterCharacteristic = null;
+            updateBtStatus('Gagal terhubung ke printer Bluetooth.');
+            if (err.name !== 'NotFoundError') { // NotFoundError = user membatalkan pemilihan perangkat, tidak perlu alert
+                alert('Gagal menyambungkan printer Bluetooth: ' + err.message);
+            }
+        }
+    }
+
+    // Ubah canvas struk (hasil html2canvas) menjadi data bitmap ESC/POS (perintah GS v 0)
+    function canvasToEscPosRaster(canvas, targetWidthDots) {
+        const w = targetWidthDots - (targetWidthDots % 8); // lebar harus kelipatan 8
+        const scale = w / canvas.width;
+        const h = Math.max(1, Math.round(canvas.height * scale));
+
+        const resized = document.createElement('canvas');
+        resized.width = w;
+        resized.height = h;
+        const ctx = resized.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, w, h);
+        ctx.drawImage(canvas, 0, 0, w, h);
+
+        const imgData = ctx.getImageData(0, 0, w, h).data;
+        const bytesPerRow = w / 8;
+        const imageBytes = new Uint8Array(bytesPerRow * h);
+
+        for (let y = 0; y < h; y++) {
+            for (let x = 0; x < w; x++) {
+                const i = (y * w + x) * 4;
+                const gray = imgData[i] * 0.299 + imgData[i + 1] * 0.587 + imgData[i + 2] * 0.114;
+                const isBlack = imgData[i + 3] > 128 && gray < 180; // threshold hitam/putih sederhana
+                if (isBlack) {
+                    imageBytes[y * bytesPerRow + (x >> 3)] |= (0x80 >> (x % 8));
+                }
+            }
+        }
+
+        const header = new Uint8Array([
+            0x1B, 0x40,                                   // ESC @  -> reset printer
+            0x1D, 0x76, 0x30, 0x00,                        // GS v 0 -> cetak raster bit image
+            bytesPerRow & 0xFF, (bytesPerRow >> 8) & 0xFF, // xL xH (lebar dalam byte)
+            h & 0xFF, (h >> 8) & 0xFF                      // yL yH (tinggi dalam dot)
+        ]);
+        const footer = new Uint8Array([0x1B, 0x64, 0x03]); // ESC d 3 -> feed 3 baris (banyak printer BT murah tak punya cutter otomatis)
+
+        const result = new Uint8Array(header.length + imageBytes.length + footer.length);
+        result.set(header, 0);
+        result.set(imageBytes, header.length);
+        result.set(footer, header.length + imageBytes.length);
+        return result;
+    }
+
+    // Kirim data ke printer per-chunk kecil (BLE punya batas ukuran paket per tulis)
+    async function sendBytesToPrinter(bytes) {
+        const CHUNK_SIZE = 180;
+        for (let i = 0; i < bytes.length; i += CHUNK_SIZE) {
+            const chunk = bytes.slice(i, i + CHUNK_SIZE);
+            if (btPrinterCharacteristic.properties.writeWithoutResponse) {
+                await btPrinterCharacteristic.writeValueWithoutResponse(chunk);
+            } else {
+                await btPrinterCharacteristic.writeValue(chunk);
+            }
+            await new Promise(r => setTimeout(r, 20)); // jeda kecil agar buffer printer tidak overflow/putus
+        }
+    }
+
+    async function printReceiptBluetooth() {
+        if (!btPrinterCharacteristic) {
+            alert('Belum ada printer Bluetooth yang terhubung.\nKlik tombol "Sambungkan" terlebih dahulu.');
+            return;
+        }
+
+        const receipt = document.getElementById('receiptContainer');
+        const hideEls = receipt.querySelectorAll('.btn-del');
+        hideEls.forEach(el => el.style.display = 'none');
+
+        try {
+            updateBtStatus('Menyiapkan gambar struk...');
+            const canvas = await html2canvas(receipt, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+            hideEls.forEach(el => el.style.display = '');
+
+            // 384 dot ~ printer 58mm, 576 dot ~ printer 80mm (standar umum printer thermal 203dpi)
+            const dotWidth = currentPaperMode === '57mm' ? 384 : 576;
+            const escposBytes = canvasToEscPosRaster(canvas, dotWidth);
+
+            updateBtStatus('Mengirim data ke printer...');
+            await sendBytesToPrinter(escposBytes);
+            updateBtStatus(`Terhubung: ${btPrinterDevice.name || 'Printer BLE'} — struk terkirim.`);
+        } catch (err) {
+            hideEls.forEach(el => el.style.display = '');
+            updateBtStatus('Gagal mencetak via Bluetooth.');
+            alert('Gagal mencetak via Bluetooth: ' + err.message);
+        }
+    }
+
+    // MULTI STORE PROFILE MANAGEMENT
+    function saveStoreProfile() {
+        const id = document.getElementById('storeId').value.trim();
+        const nama = document.getElementById('storeNama').value.trim();
+        if (!id || !nama) { alert("ID Toko dan Nama Toko wajib diisi!"); return; }
+
+        const storeData = {
+            actionType: 'saveStore',
+            id: id,
+            namaToko: nama,
+            alamat: document.getElementById('storeAlamat').value,
+            telp: document.getElementById('storeTelp').value,
+            npwp: document.getElementById('storeNpwp').value,
+            nmid: document.getElementById('storeNmid').value,
+            catatan: document.getElementById('storeCatatan').value,
+            logo: logoBase64
+        };
+
+        const idx = storesList.findIndex(s => s.id === id);
+        if (idx >= 0) storesList[idx] = storeData;
+        else storesList.push(storeData);
+
+        renderStoresTable();
+        updateStoreDropdowns();
+
+        const url = getGasUrl();
+        if (url) {
+            fetch(url, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(storeData) })
+            .then(() => alert(`Profil Toko [${nama}] berhasil disinkronkan ke Cloud Google Sheets!`))
+            .catch(err => alert("Gagal koneksi: " + err));
+        } else {
+            alert("Profil Toko tersimpan secara lokal!");
+        }
+    }
+
+    function renderStoresTable() {
+        const tbody = document.getElementById('storeTableBody');
+        tbody.innerHTML = '';
+        if (storesList.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Belum ada toko.</td></tr>';
+            return;
+        }
+        storesList.forEach((s, i) => {
+            tbody.innerHTML += `
+                <tr>
+                    <td><b>${s.id}</b></td>
+                    <td>${s.namaToko}</td>
+                    <td>${s.alamat}</td>
+                    <td>${s.telp}</td>
+                    <td><button class="btn-primary" style="padding:4px 8px; font-size:11px;" onclick="loadStoreToForm(${i})">Edit / Pilih</button></td>
+                </tr>
+            `;
+        });
+    }
+
+    function updateStoreDropdowns() {
+        const select = document.getElementById('selectStoreProfile');
+        select.innerHTML = '<option value="">-- Pilih Toko (Atur di Tab Pengaturan) --</option>';
+        storesList.forEach((s, i) => {
+            select.innerHTML += `<option value="${i}">${s.namaToko} (${s.id})</option>`;
+        });
+    }
+
+    function loadStoreToForm(idx) {
+        const s = storesList[idx];
+        document.getElementById('storeId').value = s.id;
+        document.getElementById('storeNama').value = s.namaToko;
+        document.getElementById('storeAlamat').value = s.alamat;
+        document.getElementById('storeTelp').value = s.telp;
+        document.getElementById('storeNpwp').value = s.npwp;
+        document.getElementById('storeNmid').value = s.nmid;
+        document.getElementById('storeCatatan').value = s.catatan;
+        logoBase64 = s.logo || '';
+    }
+
+    function onStoreSelectChange() {
+        const idx = document.getElementById('selectStoreProfile').value;
+        if (idx !== '') {
+            const s = storesList[idx];
+            document.getElementById('inputNamaToko').value = s.namaToko;
+            document.getElementById('inputAlamat').value = s.alamat;
+            document.getElementById('inputTelp').value = s.telp;
+            document.getElementById('inputNPWP').value = s.npwp;
+            document.getElementById('inputNMID').value = s.nmid;
+            document.getElementById('inputCatatan').value = s.catatan;
+            
+            if (s.logo) {
+                logoBase64 = s.logo;
+                displayLogo(logoBase64);
+            } else {
+                removeLogo();
+            }
+            generateNoStruk();
+        }
+    }
+
+    // GOOGLE SHEETS TRANSACTIONS API
+    function saveTransactionCloud() {
+        const storeIdx = document.getElementById('selectStoreProfile').value;
+        const storeObj = storeIdx !== '' ? storesList[storeIdx] : { namaToko: document.getElementById('previewNamaToko').innerText };
+
+        const fullData = {
+            noStruk: document.getElementById('inputNoStruk').value,
+            admin: document.getElementById('inputAdmin').value,
+            pelanggan: document.getElementById('inputPelanggan').value,
+            items: items,
+            diskonVal: document.getElementById('inputDiskonVal').value,
+            diskonType: document.getElementById('inputDiskonType').value,
+            bayar: document.getElementById('inputBayar').value,
+            status: document.getElementById('inputStatusPembayaran').value,
+            statusProses: document.getElementById('inputStatusProses').value,
+            storeIdx: storeIdx,
+            tplMode: currentTplMode,
+            paperMode: currentPaperMode,
+            codeType: currentCodeType,
+            tanggalManual: document.getElementById('inputTanggalManual').value
+        };
+
+        const payload = {
+            noStruk: fullData.noStruk,
+            tanggal: document.getElementById('previewTanggal').innerText,
+            namaToko: storeObj.namaToko,
+            admin: fullData.admin,
+            pelanggan: fullData.pelanggan,
+            grandTotal: document.getElementById('grandTotal').innerText,
+            statusBayar: fullData.status,
+            statusProses: fullData.statusProses,
+            fullData: fullData
+        };
+
+        const url = getGasUrl();
+        if (url) {
+            fetch(url, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+            .then(() => alert(`Transaksi [${payload.noStruk}] berhasil disimpan ke Cloud Google Sheets!`))
+            .catch(err => alert("Gagal menyimpan ke Cloud: " + err));
+        } else {
+            alert("Transaksi tersimpan secara lokal!");
+        }
+
+        transactionsList.unshift(payload);
+        renderHistoryTable();
+        generateNoStruk(); // siapkan nomor struk baru untuk transaksi berikutnya
+    }
+
+    function fetchTransactionsCloud() {
+        const url = getGasUrl();
+        if (!url) { alert("Isi URL Google Apps Script di tab Pengaturan terlebih dahulu!"); return; }
+
+        fetch(`${url}?type=transaksi`)
+        .then(res => res.json())
+        .then(data => {
+            if (Array.isArray(data)) {
+                transactionsList = data;
+                renderHistoryTable();
+                alert(`Berhasil memuat ${data.length} data riwayat!`);
+            }
+        });
+    }
+
+    function fetchStoresCloud() {
+        const url = getGasUrl();
+        if (!url) return;
+
+        fetch(`${url}?type=toko`)
+        .then(res => res.json())
+        .then(data => {
+            if (Array.isArray(data) && data.length > 0) {
+                storesList = data;
+                renderStoresTable();
+                updateStoreDropdowns();
+            }
+        });
+    }
+
+    function renderHistoryTable() {
+        const tbody = document.getElementById('historyList');
+        tbody.innerHTML = '';
+        if (transactionsList.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Belum ada riwayat transaksi.</td></tr>';
+            return;
+        }
+        transactionsList.forEach((t, i) => {
+            tbody.innerHTML += `
+                <tr>
+                    <td><b>${t.noStruk}</b></td>
+                    <td><small>${t.tanggal}</small></td>
+                    <td>${t.namaToko}</td>
+                    <td>${t.pelanggan}</td>
+                    <td>${t.grandTotal}</td>
+                    <td><span class="status-badge status-${t.statusBayar}">${t.statusBayar}</span></td>
+                    <td><button class="btn-primary" style="padding:4px 8px; font-size:11px;" onclick="loadTransactionToEdit(${i})">Muat Struk</button></td>
+                </tr>
+            `;
+        });
+    }
+
+    function loadTransactionToEdit(idx) {
+        const t = transactionsList[idx];
+        if (!t.fullData) return;
+        const d = t.fullData;
+
+        document.getElementById('inputAdmin').value = d.admin;
+        document.getElementById('inputPelanggan').value = d.pelanggan;
+        document.getElementById('inputDiskonVal').value = d.diskonVal || 0;
+        document.getElementById('inputDiskonType').value = d.diskonType || 'nominal';
+        document.getElementById('inputBayar').value = d.bayar || 0;
+        document.getElementById('inputStatusPembayaran').value = d.status || 'lunas';
+        document.getElementById('inputStatusProses').value = d.statusProses || 'Selesai';
+
+        // Pulihkan tanggal & jam transaksi asli (bukan waktu sekarang)
+        if (d.tanggalManual) {
+            const tglAsli = new Date(d.tanggalManual);
+            if (!isNaN(tglAsli.getTime())) {
+                document.getElementById('inputTanggalManual').value = d.tanggalManual;
+                setTanggal(tglAsli);
+            }
+        }
+
+        if (d.tplMode) {
+            document.getElementById('selectTplMode').value = d.tplMode;
+            switchTemplate();
+        }
+        if (d.paperMode) {
+            document.getElementById('selectPaperMode').value = d.paperMode;
+            switchPaperMode();
+        }
+        if (d.codeType) {
+            document.getElementById('selectCodeType').value = d.codeType;
+            switchCodeType();
+        }
+
+        if (d.storeIdx !== undefined && d.storeIdx !== '') {
+            document.getElementById('selectStoreProfile').value = d.storeIdx;
+            onStoreSelectChange(); // catatan: ini otomatis generate No. Struk baru, makanya di-timpa lagi di bawah dgn nomor aslinya
+        }
+
+        // Pulihkan No. Struk asli (harus SETELAH onStoreSelectChange, krn fungsi itu auto-generate nomor baru)
+        document.getElementById('inputNoStruk').value = d.noStruk;
+
+        items = d.items || [];
+        togglePaymentStatus();
+        updateReceipt();
+        renderItems();
+        switchTab('transaksi');
+    }
+
+    // INIT ON LOAD
+    window.onload = function() {
+        document.getElementById('inputGasUrl').value = getGasUrl();
+        document.getElementById('inputTanggalManual').value = toDatetimeLocalValue(new Date());
+        setTanggal();
+        applyContainerClasses();
+        updateTemplateNotice();
+        generateNoStruk();
+        renderItems();
+        
+        fetchStoresCloud();
+        fetchTransactionsCloud();
+    };
+</script>
+
+</body>
+</html>
