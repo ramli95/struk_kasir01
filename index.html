@@ -1533,7 +1533,7 @@
 
         const url = getGasUrl();
         if (url) {
-            fetch(url, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(storeData) })
+            fetch(url, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(storeData) })
             .then(() => alert(`Profil Toko [${nama}] berhasil disinkronkan ke Cloud Google Sheets!`))
             .catch(err => alert("Gagal koneksi: " + err));
         } else {
@@ -1625,6 +1625,7 @@
         };
 
         const payload = {
+            actionType: 'saveTransaksi',
             noStruk: fullData.noStruk,
             tanggal: document.getElementById('previewTanggal').innerText,
             namaToko: storeObj.namaToko,
@@ -1638,7 +1639,7 @@
 
         const url = getGasUrl();
         if (url) {
-            fetch(url, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+            fetch(url, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) })
             .then(() => alert(`Transaksi [${payload.noStruk}] berhasil disimpan ke Cloud Google Sheets!`))
             .catch(err => alert("Gagal menyimpan ke Cloud: " + err));
         } else {
@@ -1650,9 +1651,12 @@
         generateNoStruk(); // siapkan nomor struk baru untuk transaksi berikutnya
     }
 
-    function fetchTransactionsCloud() {
+    function fetchTransactionsCloud(silent) {
         const url = getGasUrl();
-        if (!url) { alert("Isi URL Google Apps Script di tab Pengaturan terlebih dahulu!"); return; }
+        if (!url) {
+            if (!silent) alert("Isi URL Google Apps Script di tab Pengaturan terlebih dahulu!");
+            return;
+        }
 
         fetch(`${url}?type=transaksi`)
         .then(res => res.json())
@@ -1660,8 +1664,11 @@
             if (Array.isArray(data)) {
                 transactionsList = data;
                 renderHistoryTable();
-                alert(`Berhasil memuat ${data.length} data riwayat!`);
+                if (!silent) alert(`Berhasil memuat ${data.length} data riwayat!`);
             }
+        })
+        .catch(err => {
+            if (!silent) alert("Gagal memuat riwayat dari Google Sheets: " + err.message);
         });
     }
 
@@ -1677,7 +1684,8 @@
                 renderStoresTable();
                 updateStoreDropdowns();
             }
-        });
+        })
+        .catch(err => console.warn('Gagal memuat daftar toko dari Google Sheets:', err.message));
     }
 
     function renderHistoryTable() {
@@ -1763,7 +1771,7 @@
         renderItems();
         
         fetchStoresCloud();
-        fetchTransactionsCloud();
+        fetchTransactionsCloud(true); // silent: jangan munculkan alert saat halaman baru dibuka
     };
 </script>
 
