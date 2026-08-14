@@ -404,8 +404,8 @@
                             <div class="form-group">
                                 <label>Ukuran Kertas Kasir</label>
                                 <select id="selectPaperMode" onchange="switchPaperMode()">
-                                    <option value="75mm" selected>Kasir Standar (75mm)</option>
-                                    <option value="57mm">Thermal Mini (57mm)</option>
+                                    <option value="75mm">Kasir Standar (75mm)</option>
+                                    <option value="57mm" selected>Thermal Mini (57mm)</option>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -760,7 +760,7 @@
     let items = [];
     let storesList = [];
     let transactionsList = [];
-    let currentPaperMode = '75mm';
+    let currentPaperMode = '57mm';
     let currentTplMode = 'aesculapius';
     let currentCodeType = 'qrcode';
     let logoBase64 = '';
